@@ -15,8 +15,9 @@ game = soup.title.string.replace(' - Game Center - College Football Head Coach',
 print(game)
 
 data = []
-table = soup.find('table', attrs={'class': 'boxscore'})
-box = table.find('tbody')
+table = soup.find_all('table', attrs={'class': 'boxscore'})
+print(table)
+box = table.find_all('tbody')
 
 rows = box.find_all("tr")
 for row in rows:
