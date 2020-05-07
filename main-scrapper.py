@@ -1,34 +1,47 @@
 from bs4 import BeautifulSoup
 import requests
 import csv
+# import pandas as pd
 
 # Process 1: Fetch raw HTML from a URL
-url = 'http://cfbhc.com/index.php?/topic/31964-2024-reg-florida-gators-0-0-at-xavier-musketeers-0-0/'
-page = requests.get(url).text
+gc_url = 'http://cfbhc.com/index.php?/forum/575-game-center/page/1/'
+gc_page = requests.get(gc_url).text
+gc_soup = BeautifulSoup(gc_page, 'lxml')
 
-# Process 2: Parse the html content
-soup = BeautifulSoup(page, 'lxml')
-# print(soup.prettify()) # print the parsed data of html
+gamelist = []
+for threads in gc_soup.find_all('a', attrs={'data-ipshover-timeout': '1.5'}):
+   rows = threads.get('href')
+   gamelist.append(rows)
 
-# Process 3: Extract game title to identify game
-game = soup.title.string.replace(' - Game Center - College Football Head Coach', '')
-print(game)
+del gamelist[0]
+print(gamelist)
 
-data = []
-table = soup.find_all('table', attrs={'class': 'boxscore'})
-print(table)
-box = table.find_all('tbody')
+# Process 1: Fetch raw HTML from a URL
+raw = []
 
-rows = box.find_all("tr")
-for row in rows:
-    cols = row.find_all('td')
-    cols = [ele.text.strip() for ele in cols]
-    data.append([ele for ele in cols if ele])
+for game in gamelist:
+    url = requests.get(game).text
+    soup = BeautifulSoup(url, 'lxml')
+
+    row = []
+    tables = soup.find_all('table', attrs={'class': 'boxscore'})
+    for table in tables:
+        boxes = table.find_all('tr')
+
+        for box in boxes:
+            cols = box.find_all('td')
+            cols = [ele.text.strip() for ele in cols]
+            row.append([ele for ele in cols if ele])
+            raw.append(row)
+            row = []
+
+raw = [i for i in raw if i[0]!='']
+
 
 # open csv
 csvfile = open('cbbtest.csv', 'w')
 writer = csv.writer(csvfile)
-writer.writerow(data)
+writer.writerow(raw)
 
 # close csv
 csvfile.close()
